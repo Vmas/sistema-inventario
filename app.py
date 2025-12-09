@@ -53,6 +53,12 @@ def add_product():
     if not data or not data.get('name') or not data.get('price'):
         return jsonify({'error': 'Name and price are required'}), 400
     
+    if float(data['price']) <= 0:
+        return jsonify({'error': 'Price must be a positive number'}), 400
+    
+    if int(data.get('quantity', 0)) < 0:
+        return jsonify({'error': 'Quantity cannot be negative'}), 400
+    
     try:
         product = Product(
             name=data['name'],
@@ -81,7 +87,10 @@ def update_product(product_id):
         return jsonify({'error': 'Quantity is required'}), 400
     
     try:
-        product.quantity = int(data['quantity'])
+        new_quantity = int(data['quantity'])
+        if new_quantity < 0:
+            return jsonify({'error': 'Quantity cannot be negative'}), 400
+        product.quantity = new_quantity
         db.session.commit()
         return jsonify(product.to_dict())
     except (ValueError, TypeError):
@@ -149,4 +158,6 @@ def init_db():
 
 if __name__ == '__main__':
     init_db()
+    # NOTE: debug=True is for development only. Set to False in production.
+    # For production, use a WSGI server like gunicorn instead.
     app.run(debug=True, host='0.0.0.0', port=5000)

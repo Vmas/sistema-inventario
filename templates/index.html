@@ -487,7 +487,7 @@
                         <span class="badge badge-category">${escapeHtml(product.category)}</span>
                         <span class="badge badge-price">$${product.price.toFixed(2)}</span>
                         <div class="quantity-control">
-                            <button onclick="updateQuantity(${product.id}, ${product.quantity - 1})">
+                            <button onclick="updateQuantity(${product.id}, Math.max(0, ${product.quantity - 1}))">
                                 <i class="bi bi-dash"></i>
                             </button>
                             <input type="number" value="${product.quantity}" 
@@ -525,8 +525,8 @@
             const quantity = parseInt(document.getElementById('productQuantity').value);
             const category = document.getElementById('productCategory').value;
 
-            if (!name || isNaN(price) || isNaN(quantity)) {
-                alert('Please fill in all required fields correctly');
+            if (!name || isNaN(price) || isNaN(quantity) || price <= 0 || quantity < 0) {
+                showError('Please fill in all required fields correctly. Price must be positive and quantity cannot be negative.');
                 return;
             }
 
@@ -560,7 +560,7 @@
             newQuantity = parseInt(newQuantity);
             
             if (isNaN(newQuantity) || newQuantity < 0) {
-                alert('Please enter a valid quantity');
+                showError('Please enter a valid non-negative quantity');
                 await loadProducts();
                 return;
             }
