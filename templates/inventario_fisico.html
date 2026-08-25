@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario Físico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .report-title {
+            background: linear-gradient(135deg, #1e3a5f, #2d6a9f);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .report-header {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .table-inventario th {
+            background: #1e3a5f;
+            color: white;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table-inventario td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .estado-bajo {
+            background: #f8d7da !important;
+            font-weight: bold;
+            color: #dc3545;
+        }
+        .estado-normal {
+            background: #d1e7dd !important;
+            font-weight: bold;
+            color: #198754;
+        }
+        .observaciones {
+            margin-top: 2rem;
+            padding: 1rem;
+            border: 2px dashed #6c757d;
+            border-radius: 8px;
+        }
+        .header-logo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .header-logo .vlca {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #1e3a5f;
+        }
+        @media print {
+            .btn, .no-print {
+                display: none !important;
+            }
+            .main-container {
+                box-shadow: none !important;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-container">
+            <!-- Header -->
+            <div class="header-logo">
+                <span class="vlca"><i class="bi bi-building"></i> V LCA</span>
+                <span class="no-print">
+                    <a href="/" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                    <button class="btn btn-primary btn-sm" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimir
+                    </button>
+                </span>
+            </div>
+
+            <!-- Título -->
+            <div class="report-title">
+                <h2><i class="bi bi-clipboard-check"></i> CONTROL INTERNO - MODALIDAD SORPRESIVA MENSUAL</h2>
+            </div>
+
+            <!-- Datos del conteo -->
+            <div class="report-header">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>FECHA DEL CONTO:</strong> {{ fecha }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>HORA DEL CONTO:</strong> {{ hora }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>REGISTRO NRO:</strong> 001
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>AUDITOR RESPONSABLE:</strong> _____________________
+                    </div>
+                    <div class="col-md-6">
+                        <strong>RESPONSABLE DE ALMACÉN:</strong> _____________________
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-inventario">
+                    <thead>
+                        <tr>
+                            <th>COD</th>
+                            <th>DESCRIPCIÓN</th>
+                            <th>CANTIDAD EXISTENTE</th>
+                            <th>INGRESO MENSUAL</th>
+                            <th>EGRESO MENSUAL</th>
+                            <th>DIFERENCIA</th>
+                            <th>ESTADO DE LA MERCANCIA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in data %}
+                        <tr class="{{ 'estado-bajo' if 'STOCK BAJO' in item.estado else 'estado-normal' }}">
+                            <td><strong>{{ item.codigo }}</strong></td>
+                            <td>{{ item.descripcion }}</td>
+                            <td>{{ item.cantidad_existente }}</td>
+                            <td>{{ item.ingreso_mensual }}</td>
+                            <td>{{ item.egreso_mensual }}</td>
+                            <td><strong>{{ item.diferencia }}</strong></td>
+                            <td>{{ item.estado }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="observaciones">
+                <strong><i class="bi bi-pencil"></i> OBSERVACIONES:</strong>
+                <p style="min-height: 60px; margin-top: 0.5rem; color: #6c757d;">
+                    _________________________________________________________________<br>
+                    _________________________________________________________________<br>
+                    _________________________________________________________________
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-3 text-muted" style="font-size: 0.8rem;">
+                <hr>
+                <p><strong>Fuente:</strong> Hernández, A. (2026) - Sistema de Control de Inventario</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 import os
 import sys
-import json
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -22,7 +21,6 @@ if not os.path.exists(DATA_DIR):
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(DATA_DIR, "inventory.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Inicializar base de datos
 db = SQLAlchemy(app)
 
 # ========== MODELOS ==========
@@ -44,17 +42,16 @@ class Product(db.Model):
 class Movement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
-    type = db.Column(db.String(20))  # 'entrada' o 'salida'
+    type = db.Column(db.String(20))
     quantity = db.Column(db.Integer)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     product = db.relationship('Product', backref='movements')
 
-# ========== RUTAS PRINCIPALES ==========
+# ========== RUTAS ==========
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-# ========== API RUTAS PARA PRODUCTOS (CON CATEGORÍA) ==========
+    categories = Category.query.all()
+    return render_template('index.html', categories=categories)
 
 @app.route('/api/products', methods=['GET'])
 def api_get_products():
@@ -75,13 +72,8 @@ def api_get_products():
 @app.route('/api/products', methods=['POST'])
 def api_add_product():
     data = request.get_json()
+    code = data.get('code') or f"P{datetime.now().strftime('%Y%m%d%H%M%S')}"
     
-    # Generar código automático si no viene
-    code = data.get('code')
-    if not code:
-        code = f"P{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    
-    # Buscar categoría por nombre o crear una nueva
     category_name = data.get('category', 'General')
     category = Category.query.filter_by(name=category_name).first()
     if not category:
@@ -137,8 +129,6 @@ def api_delete_product(id):
     db.session.commit()
     return jsonify({'success': True})
 
-# ========== API RUTAS PARA MOVIMIENTOS ==========
-
 @app.route('/api/movements', methods=['POST'])
 def api_add_movement():
     data = request.get_json()
@@ -155,30 +145,10 @@ def api_add_movement():
     else:
         product.stock -= quantity
     
-    movement = Movement(
-        product_id=product.id,
-        type=data['type'],
-        quantity=quantity
-    )
+    movement = Movement(product_id=product.id, type=data['type'], quantity=quantity)
     db.session.add(movement)
     db.session.commit()
     return jsonify({'success': True})
-
-@app.route('/api/movements', methods=['GET'])
-def api_get_movements():
-    movements = Movement.query.order_by(Movement.date.desc()).limit(50).all()
-    result = []
-    for m in movements:
-        result.append({
-            'id': m.id,
-            'product_name': m.product.name,
-            'type': m.type,
-            'quantity': m.quantity,
-            'date': m.date.strftime('%d/%m/%Y %H:%M')
-        })
-    return jsonify(result)
-
-# ========== RUTAS DE CATEGORÍAS ==========
 
 @app.route('/categories')
 def categories():
@@ -191,8 +161,7 @@ def add_category():
         name = request.form['name']
         description = request.form.get('description', '')
         
-        existing = Category.query.filter_by(name=name).first()
-        if existing:
+        if Category.query.filter_by(name=name).first():
             flash('❌ Ya existe una categoría con ese nombre', 'error')
             return redirect(url_for('add_category'))
         
@@ -207,7 +176,6 @@ def add_category():
 @app.route('/edit_category/<int:id>', methods=['GET', 'POST'])
 def edit_category(id):
     category = Category.query.get_or_404(id)
-    
     if request.method == 'POST':
         category.name = request.form['name']
         category.description = request.form.get('description', '')
@@ -220,7 +188,6 @@ def edit_category(id):
 @app.route('/delete_category/<int:id>')
 def delete_category(id):
     category = Category.query.get_or_404(id)
-    
     if category.products:
         flash(f'❌ No se puede eliminar "{category.name}" porque tiene productos asociados', 'error')
         return redirect(url_for('categories'))
@@ -230,31 +197,40 @@ def delete_category(id):
     flash(f'✅ Categoría "{category.name}" eliminada', 'success')
     return redirect(url_for('categories'))
 
-# ========== API RUTAS DE CATEGORÍAS ==========
-
-@app.route('/api/categories', methods=['GET'])
-def api_get_categories():
-    categories = Category.query.all()
-    result = []
-    for c in categories:
-        result.append({
-            'id': c.id,
-            'name': c.name,
-            'description': c.description,
-            'product_count': len(c.products)
+# ========== REPORTES ==========
+@app.route('/inventario_fisico')
+def inventario_fisico():
+    products = Product.query.all()
+    data = []
+    for p in products:
+        ingresos = sum(m.quantity for m in p.movements if m.type == 'entrada')
+        egresos = sum(m.quantity for m in p.movements if m.type == 'salida')
+        diferencia = p.stock + ingresos - egresos
+        estado = '⚠️ STOCK BAJO' if p.stock <= 5 else '✅ NORMAL'
+        data.append({
+            'codigo': p.code,
+            'descripcion': p.name,
+            'cantidad_existente': p.stock,
+            'ingreso_mensual': ingresos,
+            'egreso_mensual': egresos,
+            'diferencia': diferencia,
+            'estado': estado
         })
-    return jsonify(result)
+    
+    return render_template('inventario_fisico.html', data=data, fecha=datetime.now().strftime('%d/%m/%Y'), hora=datetime.now().strftime('%H:%M'))
 
-@app.route('/api/categories', methods=['POST'])
-def api_add_category():
-    data = request.get_json()
-    category = Category(
-        name=data['name'],
-        description=data.get('description', '')
-    )
-    db.session.add(category)
-    db.session.commit()
-    return jsonify({'success': True, 'id': category.id})
+@app.route('/control_es')
+def control_es():
+    movements = Movement.query.order_by(Movement.date.desc()).limit(50).all()
+    entradas = []
+    salidas = []
+    for m in movements:
+        if m.type == 'entrada':
+            entradas.append({'codigo': m.product.code, 'descripcion': m.product.name, 'cantidad': m.quantity, 'fecha': m.date.strftime('%d/%m/%Y'), 'hora': m.date.strftime('%H:%M'), 'firma': '______'})
+        else:
+            salidas.append({'codigo': m.product.code, 'descripcion': m.product.name, 'cantidad': m.quantity, 'fecha': m.date.strftime('%d/%m/%Y'), 'hora': m.date.strftime('%H:%M'), 'firma': '______'})
+    
+    return render_template('control_es.html', entradas=entradas, salidas=salidas, fecha=datetime.now().strftime('%d/%m/%Y'))
 
 # ========== EJECUTAR ==========
 if __name__ == '__main__':

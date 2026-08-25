@@ -278,6 +278,13 @@
                 <a href="/categories" class="btn btn-info btn-sm">
                     <i class="bi bi-tags"></i> Gestionar Categorías
                 </a>
+
+                 <a href="/inventario_fisico" class="btn btn-info btn-sm">
+        <i class="bi bi-clipboard-check"></i> Inventario Físico
+    </a>
+    <a href="/control_es" class="btn btn-info btn-sm">
+        <i class="bi bi-arrow-left-right"></i> Control E/S
+    </a>
             </div>
 
             <!-- Stats Cards -->
@@ -303,6 +310,7 @@
             </div>
 
             <!-- Filter and Add Product Section -->
+             
             <div class="filter-section">
                 <div class="row align-items-center">
                     <div class="col-md-4 mb-3 mb-md-0">
@@ -400,13 +408,10 @@
                         <div class="mb-3">
                             <label for="productCategory" class="form-label">Categoria</label>
                             <select class="form-select" id="productCategory">
-                                <option value="General">General</option>
-                                <option value="Electronics">Electronics</option>
-                                <option value="Accessories">Accessories</option>
-                                <option value="Office">Office</option>
-                                <option value="Furniture">Furniture</option>
-                                <option value="Storage">Storage</option>
-                                <option value="Stationery">Stationery</option>
+                                <option value="">Selecciona una categoría</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.name }}">{{ category.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                     </form>
