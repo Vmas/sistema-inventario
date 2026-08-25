@@ -272,20 +272,34 @@
     <div class="container">
         <div class="main-container">
             <!-- Header -->
-            <div class="header">
-                <h1><i class="bi bi-box-seam"></i> Sistema de gestión de inventario</h1>
-                <p>Gestione sus productos de manera eficiente y eficaz</p>
-                <a href="/categories" class="btn btn-info btn-sm">
-                    <i class="bi bi-tags"></i> Gestionar Categorías
-                </a>
-
-                 <a href="/inventario_fisico" class="btn btn-info btn-sm">
-        <i class="bi bi-clipboard-check"></i> Inventario Físico
-    </a>
-    <a href="/control_es" class="btn btn-info btn-sm">
-        <i class="bi bi-arrow-left-right"></i> Control E/S
-    </a>
-            </div>
+<div class="header">
+    <!-- LOGO -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+        <img src="{{ url_for('static', filename='img/logo.jpeg') }}" 
+             alt="Logo" 
+             style="height: 130px; width: auto; border-radius: 10px;">
+        <div>
+            <h1 style="margin: 0; font-size: 2.5rem; color: var(--primary-color);">
+                 Sistema de gestión de inventario
+            </h1>
+            <p style="margin: 0; font-size: 0.9rem; color: #6b7280;">
+                Arianna Aliendo - 2026
+            </p>
+        </div>
+    </div>
+    <p>Gestione sus productos de manera eficiente y eficaz</p>
+    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 0.5rem;">
+        <a href="/categories" class="btn btn-info btn-sm">
+            <i class="bi bi-tags"></i> Gestionar Categorías
+        </a>
+        <a href="/inventario_fisico" class="btn btn-info btn-sm">
+            <i class="bi bi-clipboard-check"></i> Inventario Físico
+        </a>
+        <a href="/control_es" class="btn btn-info btn-sm">
+            <i class="bi bi-arrow-left-right"></i> Control E/S
+        </a>
+    </div>
+</div>
 
             <!-- Stats Cards -->
             <div class="row mb-4">
