@@ -9,16 +9,28 @@ app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'
 
 # Configurar base de datos
+# Configurar base de datos (PostgreSQL en Railway, SQLite local)
 if getattr(sys, 'frozen', False):
+    # Si es .exe, usar SQLite local
     BASE_DIR = os.path.dirname(sys.executable)
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(DATA_DIR, "inventory.db")}'
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # Si es Railway (o desarrollo), usar variable de entorno
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Reemplazar 'postgres://' con 'postgresql://' para SQLAlchemy
+        app.config['SQLALCHEMY_DATABASE_URI'] = database_url.replace('postgres://', 'postgresql://')
+    else:
+        # Si no hay DATABASE_URL, usar SQLite local (para desarrollo)
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        DATA_DIR = os.path.join(BASE_DIR, 'data')
+        if not os.path.exists(DATA_DIR):
+            os.makedirs(DATA_DIR)
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(DATA_DIR, "inventory.db")}'
 
-DATA_DIR = os.path.join(BASE_DIR, 'data')
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(DATA_DIR, "inventory.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
